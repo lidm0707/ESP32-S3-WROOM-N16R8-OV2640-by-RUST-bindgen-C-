@@ -1,1 +1,1 @@
-# ESP32-S3-WROOM-N16R8-OV2640-by-RUST-bindgen-C-
+# Adapted from https://github.com/Kezii/esp32cam_rs
