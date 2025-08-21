@@ -1,7 +1,9 @@
+use esp_idf_hal::gpio::*;
+use esp_idf_sys::{
+    camera::{camera_fb_location_t, camera_grab_mode_t, framesize_t, pixformat_t},
+    *,
+};
 use std::marker::PhantomData;
-
-
-use esp_idf_sys::*;
 
 pub struct FrameBuffer<'a> {
     fb: *mut camera::camera_fb_t,
@@ -217,64 +219,187 @@ impl<'a> CameraSensor<'a> {
 }
 
 pub struct Camera<'a> {
-    _p: PhantomData<&'a ()>,
+    _pin_pwdn: Option<AnyIOPin>,
+    _pin_reset: Option<AnyIOPin>,
+    _pin_xclk: AnyIOPin,
+    _pin_d0: AnyIOPin,
+    _pin_d1: AnyIOPin,
+    _pin_d2: AnyIOPin,
+    _pin_d3: AnyIOPin,
+    _pin_d4: AnyIOPin,
+    _pin_d5: AnyIOPin,
+    _pin_d6: AnyIOPin,
+    _pin_d7: AnyIOPin,
+    _pin_vsync: AnyIOPin,
+    _pin_href: AnyIOPin,
+    _pin_pclk: AnyIOPin,
+    _pin_sda: AnyIOPin,
+    _pin_scl: AnyIOPin,
+    _pins: PhantomData<&'a ()>,
 }
 
 impl<'a> Camera<'a> {
-    pub fn new_camera(
-) -> Result<Camera<'a>, esp_idf_sys::EspError> {
-      let config = camera::camera_config_t {
-        // GPIO
-    pin_pwdn: -1,   // ถ้าไม่มี pin PWDN
-    pin_reset: -1,  // ถ้าไม่มี pin RESET
-    pin_xclk: 15,   // XCLK- 21 15
-    __bindgen_anon_1: camera::camera_config_t__bindgen_ty_1 { pin_sccb_sda: 4 }, // SIOD
-    __bindgen_anon_2: camera::camera_config_t__bindgen_ty_2 { pin_sccb_scl: 5 }, // SIOC
+    /// Default configuration for your ESP32-S3 board
+    pub fn default_ov2640() -> Result<Self, EspError> {
+        // Working pin configuration for your board
 
-    pin_d0: 11,
-    pin_d1: 9,
-    pin_d2: 8,
-    pin_d3: 10,
-    pin_d4: 12,
-    pin_d5: 18,
-    pin_d6: 17,
-    pin_d7: 16,
+        let pin_pwdn: Option<AnyIOPin> = None; // No PWDN pin
+        let pin_reset: Option<AnyIOPin> = None; // No RESET pin
+        let pin_sda = unsafe { AnyIOPin::new(4) }; // SIOD
+        let pin_scl = unsafe { AnyIOPin::new(5) }; // SIOC
+        let pin_d0 = unsafe { AnyIOPin::new(11) };
+        let pin_d1 = unsafe { AnyIOPin::new(9) };
+        let pin_d2 = unsafe { AnyIOPin::new(8) };
+        let pin_d3 = unsafe { AnyIOPin::new(10) };
+        let pin_d4 = unsafe { AnyIOPin::new(12) };
+        let pin_d5 = unsafe { AnyIOPin::new(18) };
+        let pin_d6 = unsafe { AnyIOPin::new(17) };
+        let pin_d7 = unsafe { AnyIOPin::new(16) };
+        let pin_xclk = unsafe { AnyIOPin::new(15) }; // XCLK
+        let pin_vsync = unsafe { AnyIOPin::new(6) };
+        let pin_href = unsafe { AnyIOPin::new(7) };
+        let pin_pclk = unsafe { AnyIOPin::new(13) };
 
-    pin_vsync: 6,
-    pin_href: 7,
-    pin_pclk: 13,
+        // Working camera configuration
+        let config = camera::camera_config_t {
+            pin_pwdn: -1,  // No PWDN pin
+            pin_reset: -1, // No RESET pin
+            pin_xclk: pin_xclk.pin(),
+            __bindgen_anon_1: camera::camera_config_t__bindgen_ty_1 {
+                pin_sccb_sda: pin_sda.pin(), // SIOD
+            },
+            __bindgen_anon_2: camera::camera_config_t__bindgen_ty_2 {
+                pin_sccb_scl: pin_scl.pin(), // SIOC
+            },
+            pin_d0: pin_d0.pin(),
+            pin_d1: pin_d1.pin(),
+            pin_d2: pin_d2.pin(),
+            pin_d3: pin_d3.pin(),
+            pin_d4: pin_d4.pin(),
+            pin_d5: pin_d5.pin(),
+            pin_d6: pin_d6.pin(),
+            pin_d7: pin_d7.pin(),
+            pin_vsync: pin_vsync.pin(),
+            pin_href: pin_href.pin(),
+            pin_pclk: pin_pclk.pin(),
+            // Clock settings
+            xclk_freq_hz: 20_000_000, // ต้องใส่ ไม่งั้นกล้องไม่ detect
+            ledc_channel: 0,          // LEDC_CHANNEL_0
+            ledc_timer: 0,            // LEDC_TIMER_0
+            // Camera settings
+            pixel_format: camera::pixformat_t_PIXFORMAT_JPEG,
+            frame_size: camera::framesize_t_FRAMESIZE_QQVGA,
+            jpeg_quality: 12,
+            fb_count: 1,
+            grab_mode: camera::camera_grab_mode_t_CAMERA_GRAB_WHEN_EMPTY,
+            fb_location: camera::camera_fb_location_t_CAMERA_FB_IN_DRAM,
+            ..Default::default()
+        };
 
-    // Clock
-    xclk_freq_hz: 20_000_000,  // ต้องใส่ ไม่งั้นกล้องไม่ detect
-    ledc_channel: 0,           // LEDC_CHANNEL_0
-    ledc_timer: 0,             // LEDC_TIMER_0
+        esp!(unsafe { camera::esp_camera_init(&config) })?;
 
-    // Camera settings
-    pixel_format: camera::pixformat_t_PIXFORMAT_JPEG,
-    // frame_size,
-    // esp_idf_sys::camera::framesize_t_FRAMESIZE_QVGA
-    frame_size: camera::framesize_t_FRAMESIZE_QQVGA,
-    jpeg_quality: 12,
-    fb_count: 1,
-    grab_mode: camera::camera_grab_mode_t_CAMERA_GRAB_WHEN_EMPTY,
-    // fb_location: camera::camera_fb_location_t_CAMERA_FB_IN_PSRAM,
-    fb_location: camera::camera_fb_location_t_CAMERA_FB_IN_DRAM,
+        Ok(Camera {
+            _pin_pwdn: pin_pwdn,
+            _pin_reset: pin_reset,
+            _pin_xclk: pin_xclk,
+            _pin_d0: pin_d0,
+            _pin_d1: pin_d1,
+            _pin_d2: pin_d2,
+            _pin_d3: pin_d3,
+            _pin_d4: pin_d4,
+            _pin_d5: pin_d5,
+            _pin_d6: pin_d6,
+            _pin_d7: pin_d7,
+            _pin_vsync: pin_vsync,
+            _pin_href: pin_href,
+            _pin_pclk: pin_pclk,
+            _pin_sda: pin_sda,
+            _pin_scl: pin_scl,
+            _pins: PhantomData,
+        })
+    }
 
-    
+    pub fn new(
+        pin_pwdn: Option<AnyIOPin>,
+        pin_reset: Option<AnyIOPin>,
+        pin_xclk: AnyIOPin,
+        pin_d0: AnyIOPin,
+        pin_d1: AnyIOPin,
+        pin_d2: AnyIOPin,
+        pin_d3: AnyIOPin,
+        pin_d4: AnyIOPin,
+        pin_d5: AnyIOPin,
+        pin_d6: AnyIOPin,
+        pin_d7: AnyIOPin,
+        pin_vsync: AnyIOPin,
+        pin_href: AnyIOPin,
+        pin_pclk: AnyIOPin,
+        pin_sda: AnyIOPin,
+        pin_scl: AnyIOPin,
+        pixel_format: pixformat_t,
+        frame_size: framesize_t,
+        grab_mode: camera_grab_mode_t,
+        fb_location: camera_fb_location_t,
+    ) -> Result<Camera<'a>, EspError> {
+        let config = camera::camera_config_t {
+            pin_pwdn: pin_pwdn.as_ref().map_or(-1, |p: &AnyIOPin| p.pin()),
+            pin_reset: pin_reset.as_ref().map_or(-1, |p: &AnyIOPin| p.pin()),
+            pin_xclk: pin_xclk.pin(),
+            __bindgen_anon_1: camera::camera_config_t__bindgen_ty_1 {
+                pin_sccb_sda: pin_sda.pin(),
+            },
+            __bindgen_anon_2: camera::camera_config_t__bindgen_ty_2 {
+                pin_sccb_scl: pin_scl.pin(),
+            },
+            pin_d0: pin_d0.pin(),
+            pin_d1: pin_d1.pin(),
+            pin_d2: pin_d2.pin(),
+            pin_d3: pin_d3.pin(),
+            pin_d4: pin_d4.pin(),
+            pin_d5: pin_d5.pin(),
+            pin_d6: pin_d6.pin(),
+            pin_d7: pin_d7.pin(),
+            pin_vsync: pin_vsync.pin(),
+            pin_href: pin_href.pin(),
+            pin_pclk: pin_pclk.pin(),
+            xclk_freq_hz: 20_000_000,
+            ledc_channel: 0,
+            ledc_timer: 0,
+            pixel_format,
+            frame_size,
+            jpeg_quality: 12,
+            fb_count: 1,
+            grab_mode,
+            fb_location,
+            ..Default::default()
+        };
 
-    ..Default::default()
-};
-  
+        esp!(unsafe { camera::esp_camera_init(&config) })?;
 
-    esp_idf_sys::esp!(unsafe { camera::esp_camera_init(&config) })?;
-    Ok(Camera { _p: PhantomData })
-}
-
+        Ok(Camera {
+            _pin_pwdn: pin_pwdn,
+            _pin_reset: pin_reset,
+            _pin_xclk: pin_xclk,
+            _pin_d0: pin_d0,
+            _pin_d1: pin_d1,
+            _pin_d2: pin_d2,
+            _pin_d3: pin_d3,
+            _pin_d4: pin_d4,
+            _pin_d5: pin_d5,
+            _pin_d6: pin_d6,
+            _pin_d7: pin_d7,
+            _pin_vsync: pin_vsync,
+            _pin_href: pin_href,
+            _pin_pclk: pin_pclk,
+            _pin_sda: pin_sda,
+            _pin_scl: pin_scl,
+            _pins: PhantomData,
+        })
+    }
 
     pub fn get_framebuffer(&self) -> Option<FrameBuffer> {
         let fb = unsafe { camera::esp_camera_fb_get() };
         if fb.is_null() {
-            //unsafe { camera::esp_camera_fb_return(fb); }
             None
         } else {
             Some(FrameBuffer {
@@ -284,10 +409,15 @@ impl<'a> Camera<'a> {
         }
     }
 
-    pub fn sensor(&self) -> CameraSensor<'a> {
-        CameraSensor {
-            sensor: unsafe { camera::esp_camera_sensor_get() },
-            _p: PhantomData,
+    pub fn sensor(&self) -> Option<CameraSensor<'a>> {
+        let sensor = unsafe { camera::esp_camera_sensor_get() };
+        if sensor.is_null() {
+            None
+        } else {
+            Some(CameraSensor {
+                sensor,
+                _p: PhantomData,
+            })
         }
     }
 }

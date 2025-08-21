@@ -10,10 +10,8 @@ fn main() {
     let _peripherals = Peripherals::take().unwrap();
 
     // ✅ init กล้องแบบ fix mapping
-    let camera = Camera::new_camera(
-    )
-    .expect("camera init failed");
-
+    let camera = Camera::default_ov2640().expect("camera init failed");
+    // let sad = &peripherals;
     loop {
         if let Some(framebuffer) = camera.get_framebuffer() {
             log::info!("Got framebuffer!");
