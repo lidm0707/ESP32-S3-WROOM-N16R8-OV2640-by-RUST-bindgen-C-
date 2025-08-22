@@ -2,9 +2,11 @@
 
 
 
-# 🦀 ESP32-S3 OV2640 Camera with Rust (Bindgen C)
+# 🦀 ESP32-S3 OV2640 Camera with Rust (customer extra esp)
 
-![ESP CrabCam](assets/crabby_esp_cam.png)
+<p align="center">
+  <img src="assets/crabby_esp_cam.png" alt="ESP CrabCam" width="160" height="160">
+</p>
 
 This project provides Rust bindings for the **ESP32-S3-WROOM-N16R8** with the **OV2640 camera** using [bindgen](https://rust-lang.github.io/rust-bindgen/) and [esp-idf](https://github.com/esp-rs/esp-idf).
 
