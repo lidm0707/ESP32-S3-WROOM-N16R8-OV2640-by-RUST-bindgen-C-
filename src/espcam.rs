@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use esp_idf_hal::gpio::*;
 use esp_idf_sys::{
     camera::{camera_fb_location_t, camera_grab_mode_t, framesize_t, pixformat_t},
@@ -156,7 +158,6 @@ impl<'a> CameraSensor<'a> {
         esp!(unsafe { (*self.sensor).set_reg.unwrap()(self.sensor, reg, mask, value) })
     }
     
-    #![allow(clippy::too_many_arguments)]
     pub fn set_res_raw(
         &self,
         start_x: i32,
@@ -242,7 +243,6 @@ pub struct Camera<'a> {
 
 impl<'a> Camera<'a> {
     /// Default configuration for your ESP32-S3 board
-    #![allow(clippy::too_many_arguments)]
     pub fn default_ov2640() -> Result<Self, EspError> {
         // Working pin configuration for your board
 
