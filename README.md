@@ -2,7 +2,7 @@
 
 
 
-# 🦀 ESP32-S3 OV2640 Camera with Rust (customer extra esp)
+# 🦀 ESP32-S3 OV2640 Camera with Rust (custom extra esp)
 
 <p align="center">
   <img src="assets/crabby_esp_cam.png" alt="ESP CrabCam" width="160" height="160">
