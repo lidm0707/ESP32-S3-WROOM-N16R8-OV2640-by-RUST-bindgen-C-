@@ -321,7 +321,6 @@ impl<'a> Camera<'a> {
             _pins: PhantomData,
         })
     }
-    #![allow(clippy::too_many_arguments)
     pub fn new(
         pin_pwdn: Option<AnyIOPin>,
         pin_reset: Option<AnyIOPin>,
