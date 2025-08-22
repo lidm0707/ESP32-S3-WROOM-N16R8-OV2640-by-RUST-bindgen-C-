@@ -155,6 +155,8 @@ impl<'a> CameraSensor<'a> {
     pub fn set_reg(&self, reg: i32, mask: i32, value: i32) -> Result<(), EspError> {
         esp!(unsafe { (*self.sensor).set_reg.unwrap()(self.sensor, reg, mask, value) })
     }
+    
+    #![allow(clippy::too_many_arguments)]
     pub fn set_res_raw(
         &self,
         start_x: i32,
@@ -240,6 +242,7 @@ pub struct Camera<'a> {
 
 impl<'a> Camera<'a> {
     /// Default configuration for your ESP32-S3 board
+    #![allow(clippy::too_many_arguments)]
     pub fn default_ov2640() -> Result<Self, EspError> {
         // Working pin configuration for your board
 
@@ -318,7 +321,7 @@ impl<'a> Camera<'a> {
             _pins: PhantomData,
         })
     }
-
+    #![allow(clippy::too_many_arguments)
     pub fn new(
         pin_pwdn: Option<AnyIOPin>,
         pin_reset: Option<AnyIOPin>,
